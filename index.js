@@ -13,22 +13,22 @@ const defaultProvider = "http://127.0.0.1:8732",
     mp2: new Uint8Array([5, 183, 102]),
     mp3: new Uint8Array([5, 183, 104]),
     KT: new Uint8Array([2,90,121]),
-    
-    
+
+
     edpk: new Uint8Array([13, 15, 37, 217]),
     edsk2: new Uint8Array([13, 15, 58, 7]),
     spsk: new Uint8Array([17, 162, 224, 201]),
     p2sk: new Uint8Array([16,81,238,189]),
-    
+
     sppk: new Uint8Array([3, 254, 226, 86]),
     p2pk: new Uint8Array([3, 178, 139, 127]),
-    
+
     edsk: new Uint8Array([43, 246, 78, 7]),
     edsig: new Uint8Array([9, 245, 205, 134, 18]),
     spsig1: new Uint8Array([13, 115, 101, 19, 63]),
     p2sig: new Uint8Array([54, 240, 44, 52]),
     sig: new Uint8Array([4, 130, 43]),
-    
+
     Net: new Uint8Array([87, 82, 0]),
     nce: new Uint8Array([69, 220, 169]),
     b: new Uint8Array([1,52]),
@@ -55,7 +55,7 @@ utility = {
     const n = new Uint8Array(prefix.length + payload.length);
     n.set(prefix);
     n.set(payload, prefix.length);
-    return library.bs58check.encode(new Buffer(n, 'hex'));
+    return library.bs58check.encode(new Buffer.from(n, 'hex'));
   },
   b58cdecode: (enc, prefix) => library.bs58check.decode(enc).slice(prefix.length),
   buf2hex: function (buffer) {
@@ -251,7 +251,7 @@ crypto = {
     switch(pref){
       case "edsk":
         if (sk.length == 98){
-          const out = new Buffer(20);
+          const out = new Buffer.alloc(20);
           library.sodium.crypto_generichash(out, utility.b58cdecode(sk, prefix.edsk).slice(32))
 
           return {
@@ -261,11 +261,11 @@ crypto = {
           };
         } else if (sk.length == 54) { //seed
           const seed = utility.b58cdecode(sk, prefix.edsk2);
-          const privateKey = new Buffer(library.sodium.crypto_sign_SECRETKEYBYTES);
-          const publicKey = new Buffer(library.sodium.crypto_sign_PUBLICKEYBYTES);
+          const privateKey = new Buffer.from(library.sodium.crypto_sign_SECRETKEYBYTES);
+          const publicKey = new Buffer.from(library.sodium.crypto_sign_PUBLICKEYBYTES);
           library.sodium.crypto_sign_seed_keypair(publicKey, privateKey, seed);
 
-          const out = new Buffer(20);
+          const out = new Buffer.alloc(20);
           library.sodium.crypto_generichash(out, publicKey)
 
           return {
@@ -292,11 +292,11 @@ crypto = {
     }
   },
   generateKeysNoSeed: function () {
-    const privateKey = new Buffer(library.sodium.crypto_sign_SECRETKEYBYTES);
-    const publicKey = new Buffer(library.sodium.crypto_sign_PUBLICKEYBYTES);
+    const privateKey = new Buffer.from(library.sodium.crypto_sign_SECRETKEYBYTES);
+    const publicKey = new Buffer.from(library.sodium.crypto_sign_PUBLICKEYBYTES);
     library.sodium.crypto_sign_keypair(publicKey, privateKey);
 
-    const out = new Buffer(20);
+    const out = new Buffer.alloc(20);
     library.sodium.crypto_generichash(out, publicKey)
 
     return {
@@ -307,11 +307,11 @@ crypto = {
   },
   generateKeys: function (m, p) {
     const seed = library.bip39.mnemonicToSeedSync(m, p).slice(0, 32);
-    const privateKey = new Buffer(library.sodium.crypto_sign_SECRETKEYBYTES);
-    const publicKey = new Buffer(library.sodium.crypto_sign_PUBLICKEYBYTES);
+    const privateKey = new Buffer.from(library.sodium.crypto_sign_SECRETKEYBYTES);
+    const publicKey = new Buffer.from(library.sodium.crypto_sign_PUBLICKEYBYTES);
     library.sodium.crypto_sign_seed_keypair(publicKey, privateKey, seed);
 
-    const out = new Buffer(20);
+    const out = new Buffer.alloc(20);
     library.sodium.crypto_generichash(out, publicKey);
 
     return {
@@ -339,10 +339,10 @@ crypto = {
     var bb = utility.hex2buf(bytes);
     if (typeof wm != 'undefined') bb = utility.mergebuf(wm, bb);
 
-    const out = new Buffer(32);
+    const out = new Buffer.alloc(32);
     library.sodium.crypto_generichash(out, bb)
 
-    const sig = new Buffer(library.sodium.crypto_sign_BYTES);
+    const sig = new Buffer.from(library.sodium.crypto_sign_BYTES);
     library.sodium.crypto_sign_detached(sig, out, utility.b58cdecode(sk, prefix.edsk));
     const edsig = utility.b58cencode(sig, prefix.edsig);
     const sbytes = bytes + utility.buf2hex(sig);
@@ -374,7 +374,7 @@ node = {
     if (typeof o === 'undefined') {
       if (typeof t === 'undefined') {
         t = "GET";
-      } else 
+      } else
         o = {};
     } else {
       if (typeof t === 'undefined')
@@ -411,7 +411,7 @@ node = {
       };
       if (t == 'POST'){
         http.setRequestHeader("Content-Type", "application/json");
-        http.send(JSON.stringify(o));        
+        http.send(JSON.stringify(o));
       } else {
         http.send();
       }
@@ -581,7 +581,7 @@ node = {
       } else {
         ops = [operation];
       }
-     
+
       for(let i = 0; i < ops.length; i++){
         if (['transaction','mine_transaction','origination','delegation'].indexOf(ops[i].kind) >= 0){
           requiresReveal = true;
@@ -604,7 +604,7 @@ node = {
           });
         }
         counter = parseInt(f[1]) + 1;
-        
+
         for(let i = 0; i < ops.length; i++){
           if (['proposals','ballot','transaction','mine_transaction','origination','delegation'].indexOf(ops[i].kind) >= 0){
             if (typeof ops[i].source == 'undefined') ops[i].source = from;
@@ -613,7 +613,7 @@ node = {
             if (typeof ops[i].gas_limit == 'undefined') ops[i].gas_limit = "0";
             if (typeof ops[i].storage_limit == 'undefined') ops[i].storage_limit = "0";
             ops[i].counter = (counter++).toString();
-            
+
              ops[i].fee = ops[i].fee.toString();
              ops[i].gas_limit = ops[i].gas_limit.toString();
              ops[i].storage_limit = ops[i].storage_limit.toString();
@@ -631,7 +631,7 @@ node = {
         var signed = crypto.sign(opbytes, keys.sk, watermark.generic);
         sopbytes = signed.sbytes;
 
-        const out = new Buffer(32);
+        const out = new Buffer.alloc(32);
         library.sodium.crypto_generichash(out, utility.hex2buf(sopbytes))
 
         var oh = utility.b58cencode(out, prefix.o);
@@ -648,12 +648,12 @@ node = {
             if (typeof f[i].contents[j].metadata.operation_result != 'undefined' && f[i].contents[j].metadata.operation_result.status == "failed")
               errors = errors.concat(f[i].contents[j].metadata.operation_result.errors);
           }
-        } 
+        }
         if (errors.length) throw {error: "Operation Failed", errors:errors};
         return node.query('/injection/operation', sopbytes);
       })
       .then(function (f) {
-        
+
         return {
           hash : f,
           operations : opResponse
@@ -687,15 +687,15 @@ node = {
       if (!constants)
         throw new Error('error load constants');
 
-      const count_plex_per_block = 
+      const count_plex_per_block =
         constants.endorsers_per_block * (
-          utility.totez(constants.baking_reward_per_endorsement[0]) + 
+          utility.totez(constants.baking_reward_per_endorsement[0]) +
           utility.totez(constants.endorsement_reward[0])
         );
 
       // const delegates = await rpc.getAllActiveDelegates()
-      // const mine_balances = total_stake || await delegates.reduce(async (acc, delegate) => 
-      //   await acc + utility.totez(await rpc.getStakingMineBalance(delegate)), 
+      // const mine_balances = total_stake || await delegates.reduce(async (acc, delegate) =>
+      //   await acc + utility.totez(await rpc.getStakingMineBalance(delegate)),
       //   0
       // );
 
@@ -797,7 +797,7 @@ node = {
     },
     storage: function (contract) {
       return new Promise(function (resolve, reject) {
-        mpapi.node.query("/chains/main/blocks/head/context/contracts/" + contract + 
+        mpapi.node.query("/chains/main/blocks/head/context/contracts/" + contract +
         "/storage").then(function (r) {
           resolve(r);
         }).catch(function (e) {
