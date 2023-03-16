@@ -684,7 +684,7 @@ node = {
     sendOperation: function (from, operation, keys) {
       return rpc.buildOperation(from, operation, keys).then(({ opbytes, opOb }) => {
         var { sopbytes, signature } = rpc.signOperation(opbytes, keys);
-        opOb.protocol = "Pt4xzupCszbuxgMSWE2WnReY4aryz1Te3pGN78YEkhjss7C1AMK";
+        opOb.protocol = "PtWEnWTwdZMCCzT1c9TKdhpsB6JzJj93UsyGRgno2mctKie4q6n";
         opOb.signature = signature;
 
         return rpc.validateOperation(opOb).then(({ errors, opResponse }) => {
